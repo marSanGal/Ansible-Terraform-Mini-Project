@@ -1,0 +1,54 @@
+- hosts: ci_server
+  become: true
+  tasks:
+    - name: Install packages
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - docker.io
+        - Jenkins
+        - unzip
+        - wget
+        - curl
+
+    - name: Add user to Docker group
+      user:
+        name: jenkins
+        groups: docker
+
+    - name: Add Jenkins to sudo group
+      user:
+        name: jenkins
+        groups: sudo
+
+- hosts: deployment
+  become: true
+  tasks:
+    - name: Install MySQL client
+      apt:
+        name: mysql-client
+        state: present
+
+    - name: Clone the GitLab repository
+      git:
+        repo: "https://gitlab.com/Reece-Elder/devops-m5-nodeproject.git"
+        dest: "/opt/app"
+        version: main
+
+    - name: Install Node.js and npm
+      apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - nodejs
+        - npm
+
+    - name: Install application dependencies
+      npm:
+        path: "/opt/app"
+
+    - name: Start the application (example command, modify as needed)
+      command: "npm start"
+      args:
+        chdir: "/opt/app"
